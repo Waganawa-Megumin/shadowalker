@@ -1,0 +1,48 @@
+{
+  "type": "FeatureCollection",
+  "_note": "人手キュレーションの覆い経路（地下街・アーケード）。出典/ライセンスは LICENSE_DATA.md。概略線形のため実測ではなく目安。",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "新宿駅西口地下街", "kind": "underground" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [139.69930, 35.68990], [139.70060, 35.68980], [139.70180, 35.69010], [139.70320, 35.69060], [139.70450, 35.69140]
+      ] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "八重洲地下街", "kind": "underground" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [139.76960, 35.68030], [139.77050, 35.68010], [139.77140, 35.67980], [139.77220, 35.67930]
+      ] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "銀座（数寄屋橋〜銀座駅地下）", "kind": "underground" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [139.76300, 35.67200], [139.76420, 35.67150], [139.76540, 35.67110], [139.76660, 35.67080]
+      ] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "池袋（東西連絡地下通路）", "kind": "underground" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [139.70980, 35.72950], [139.71080, 35.72980], [139.71200, 35.73010], [139.71320, 35.73020]
+      ] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "サンシャインシティ連絡通路", "kind": "covered" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [139.71700, 35.72870], [139.71820, 35.72880], [139.71940, 35.72900]
+      ] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "横浜ジョイナス（地下）", "kind": "underground" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [139.62100, 35.46600], [139.62200, 35.46650], [139.62300, 35.46720]
+      ] }
+    }
+  ]
+}

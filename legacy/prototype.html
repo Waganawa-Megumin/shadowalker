@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>影みち — 東京 日陰ルート案内</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4EFE6;
+    --panel:#FBF8F1;
+    --ink:#2A2724;
+    --ink-soft:#6B6258;
+    --line:#DED5C5;
+    --sun:#E07B2E;
+    --sun-soft:#F6D9B8;
+    --shade:#2E6E7E;
+    --shade-soft:#BFD9DC;
+    --shadow:0 2px 0 rgba(42,39,36,.06), 0 14px 34px -18px rgba(42,39,36,.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:"Zen Kaku Gothic New",sans-serif;
+    background:var(--bg);color:var(--ink);
+    display:flex;flex-direction:column;height:100dvh;overflow:hidden;
+  }
+  /* header */
+  header{
+    padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--line);
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  }
+  header h1{
+    font-family:"Shippori Mincho B1",serif;font-weight:800;font-size:23px;letter-spacing:.04em;
+    display:flex;align-items:center;gap:9px;
+  }
+  header h1 .sun-mark{
+    width:18px;height:18px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #F6B05E, var(--sun));
+    box-shadow:0 0 0 4px var(--sun-soft);flex:none;
+  }
+  header .tag{font-size:12.5px;color:var(--ink-soft);letter-spacing:.02em}
+  /* layout */
+  .wrap{flex:1;display:flex;min-height:0}
+  #map{flex:1;min-width:0;background:#e9e4da;z-index:1}
+  .leaflet-container{font-family:inherit}
+  aside{
+    width:360px;flex:none;background:var(--panel);border-left:1px solid var(--line);
+    overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:16px;
+  }
+  /* mobile */
+  @media(max-width:820px){
+    .wrap{flex-direction:column}
+    aside{width:auto;border-left:none;border-top:1px solid var(--line);max-height:46dvh}
+    #map{min-height:200px}
+  }
+  .card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .card h2{
+    font-family:"Shippori Mincho B1",serif;font-size:14px;font-weight:700;letter-spacing:.05em;
+    margin-bottom:11px;color:var(--ink);display:flex;align-items:center;gap:7px;
+  }
+  .card h2 .num{
+    font-size:11px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--bg);
+    display:grid;place-items:center;font-family:"Zen Kaku Gothic New";font-weight:700;
+  }
+  .field{margin-bottom:10px}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;letter-spacing:.02em}
+  .pt-btn{
+    width:100%;text-align:left;padding:9px 11px;border:1px dashed var(--line);background:var(--panel);
+    border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;
+    display:flex;align-items:center;gap:8px;transition:.15s;
+  }
+  .pt-btn .dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .pt-btn.start .dot{background:var(--ink)}
+  .pt-btn.end .dot{background:var(--sun)}
+  .pt-btn:hover{border-color:var(--ink)}
+  .pt-btn.active{border-style:solid;border-color:var(--ink);background:#fff}
+  .pt-btn small{color:var(--ink-soft);margin-left:auto;font-size:11px}
+
+  input[type=range]{width:100%;accent-color:var(--sun);height:22px}
+  input[type=date]{
+    font-family:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);
+    border-radius:9px;background:var(--panel);color:var(--ink);width:100%;
+  }
+  .timeval{font-family:"Shippori Mincho B1",serif;font-size:20px;font-weight:700}
+  .row{display:flex;gap:10px;align-items:center}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{
+    flex:1;border:none;background:var(--panel);font-family:inherit;font-size:12px;padding:7px 4px;
+    cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);
+  }
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--ink);color:var(--bg)}
+
+  .go{
+    width:100%;padding:13px;border:none;border-radius:12px;cursor:pointer;
+    font-family:"Shippori Mincho B1",serif;font-weight:700;font-size:15px;letter-spacing:.06em;
+    background:var(--ink);color:var(--bg);transition:.15s;
+  }
+  .go:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+  .go:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+
+  /* sun compass */
+  .compass-wrap{display:flex;gap:14px;align-items:center}
+  .compass-wrap svg{flex:none}
+  .sun-stats{font-size:12.5px;line-height:1.7;color:var(--ink-soft)}
+  .sun-stats b{color:var(--ink);font-family:"Shippori Mincho B1",serif;font-weight:700;font-size:15px}
+  .weather-line{
+    font-size:12.5px;color:var(--ink-soft);margin-top:10px;padding-top:10px;
+    border-top:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .temp-chip{background:var(--sun-soft);color:#8a4a14;padding:3px 9px;border-radius:20px;font-weight:700;font-size:12px}
+
+  /* results */
+  #results{display:flex;flex-direction:column;gap:10px}
+  .route-card{
+    border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;
+    background:var(--panel);transition:.15s;position:relative;overflow:hidden;
+  }
+  .route-card:hover{border-color:var(--ink)}
+  .route-card.sel{border-color:var(--ink);border-width:2px;padding:11px}
+  .route-card.best::after{
+    content:"おすすめ";position:absolute;top:0;right:0;background:var(--ink);color:var(--bg);
+    font-size:10px;padding:3px 9px;border-bottom-left-radius:9px;letter-spacing:.08em;
+  }
+  .route-card .rt-name{font-family:"Shippori Mincho B1",serif;font-weight:700;font-size:14px;margin-bottom:8px}
+  .bar{height:9px;border-radius:6px;background:var(--sun-soft);overflow:hidden;margin-bottom:7px}
+  .bar i{display:block;height:100%;background:var(--shade);border-radius:6px;transition:width .5s}
+  .rt-meta{display:flex;gap:12px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap}
+  .rt-meta b{color:var(--ink)}
+  .rt-meta .shade-pct{color:var(--shade);font-weight:700}
+
+  .legend{display:flex;gap:14px;font-size:11.5px;color:var(--ink-soft);align-items:center;margin-top:4px}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{width:16px;height:5px;border-radius:3px;display:block}
+
+  .hint{font-size:11.5px;color:var(--ink-soft);line-height:1.6}
+  .status{font-size:12px;color:var(--ink-soft);text-align:center;padding:6px}
+  .status.err{color:#b3402a}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--sun-soft);border-top-color:var(--sun);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* map markers */
+  .pin{width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+  .pin.s{background:var(--ink)}
+  .pin.e{background:var(--sun)}
+  .sun-icon{font-size:22px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+
+  details summary{cursor:pointer;font-size:12px;color:var(--ink-soft);padding:2px 0}
+  details p{font-size:11.5px;color:var(--ink-soft);line-height:1.65;margin-top:7px}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="sun-mark"></span>影みち</h1>
+  <span class="tag">東京の暑い日に、すこしでも日陰の多いルートを。</span>
+</header>
+
+<div class="wrap">
+  <div id="map"></div>
+  <aside>
+    <!-- 1. 地点 -->
+    <div class="card">
+      <h2><span class="num">1</span>出発地と目的地</h2>
+      <div class="field">
+        <button class="pt-btn start active" id="btnStart">
+          <span class="dot"></span><span id="startLabel">出発地を地図でタップ</span><small>編集中</small>
+        </button>
+      </div>
+      <div class="field">
+        <button class="pt-btn end" id="btnEnd">
+          <span class="dot"></span><span id="endLabel">目的地を地図でタップ</span><small></small>
+        </button>
+      </div>
+      <p class="hint">地図をタップして2点を置いてください。ボタンで「いま編集する点」を切り替えられます。</p>
+    </div>
+
+    <!-- 2. 時刻 -->
+    <div class="card">
+      <h2><span class="num">2</span>いつ歩く？</h2>
+      <div class="field row">
+        <input type="date" id="dateInput">
+        <button class="go" style="width:auto;padding:8px 12px;font-size:12px" id="nowBtn">現在</button>
+      </div>
+      <div class="field">
+        <label>時刻 <span class="timeval" id="timeText">12:00</span></label>
+        <input type="range" id="timeSlider" min="0" max="1439" step="5" value="720">
+      </div>
+    </div>
+
+    <!-- 太陽 -->
+    <div class="card">
+      <h2><span class="num">☀</span>太陽の位置</h2>
+      <div class="compass-wrap">
+        <svg id="compass" width="92" height="92" viewBox="0 0 92 92"></svg>
+        <div class="sun-stats" id="sunStats"></div>
+      </div>
+      <div class="weather-line" id="weatherLine"><span class="spin"></span>天気を取得中…</div>
+    </div>
+
+    <!-- 3. 重視 -->
+    <div class="card">
+      <h2><span class="num">3</span>なにを優先する？</h2>
+      <div class="field">
+        <label>近さ ⟷ 日陰の多さ</label>
+        <input type="range" id="prefSlider" min="0" max="100" step="5" value="60">
+        <div class="legend" style="justify-content:space-between;margin-top:2px">
+          <span>とにかく最短</span><span>とにかく日陰</span>
+        </div>
+      </div>
+      <button class="go" id="findBtn" disabled>影みちを探す</button>
+    </div>
+
+    <!-- 結果 -->
+    <div class="card" id="resultCard" style="display:none">
+      <h2><span class="num">→</span>ルート候補</h2>
+      <div id="results"></div>
+      <div class="legend" style="margin-top:10px">
+        <span><i style="background:var(--shade)"></i>日陰</span>
+        <span><i style="background:var(--sun)"></i>日なた</span>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <details>
+      <summary>影の出し方・限界について</summary>
+      <p>太陽の方位・高度は緯度経度と日時から天文計算しています（外部データ不要）。各地点が日陰かは「太陽の方向に、太陽を遮る高さの建物があるか」をレイ判定で求めています。建物の高さは OpenStreetMap の height / building:levels を使い、無い所は約9mと仮定。経路は OSRM の道路ネットワークを使うため、厳密な歩行者専用路や地下通路は含まれません。街路樹・高架・アーケード・日射の散乱も未考慮です。あくまで相対比較の目安としてお使いください。</p>
+    </details>
+  </aside>
+</div>
+
+<script>
+/* ============ 太陽位置（SunCalc 準拠の天文計算） ============ */
+const RAD = Math.PI/180;
+function solarPosition(date, lat, lng){
+  const dayMs=86400000, J1970=2440588, J2000=2451545;
+  const toDays = d => d.valueOf()/dayMs - 0.5 + J1970 - J2000;
+  const e = RAD*23.4397;
+  const d = toDays(date);
+  const M = RAD*(357.5291 + 0.98560028*d);
+  const C = RAD*(1.9148*Math.sin(M)+0.02*Math.sin(2*M)+0.0003*Math.sin(3*M));
+  const L = M + C + RAD*102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(0)*Math.cos(e)+Math.cos(0)*Math.sin(e)*Math.sin(L));
+  const ra  = Math.atan2(Math.sin(L)*Math.cos(e)-Math.tan(0)*Math.sin(e), Math.cos(L));
+  const lw = RAD*-lng, phi = RAD*lat;
+  const sidereal = RAD*(280.16+360.9856235*d) - lw;
+  const H = sidereal - ra;
+  const az = Math.atan2(Math.sin(H), Math.cos(H)*Math.sin(phi)-Math.tan(dec)*Math.cos(phi));
+  const alt = Math.asin(Math.sin(phi)*Math.sin(dec)+Math.cos(phi)*Math.cos(dec)*Math.cos(H));
+  return { azimuth:(az/RAD+180+360)%360, altitude:alt/RAD }; // 方位:北0°時計回り / 高度:度
+}
+
+/* ============ 幾何ヘルパ ============ */
+const R=6371000;
+function bearing(a,b){
+  const φ1=a[0]*RAD,φ2=b[0]*RAD,Δλ=(b[1]-a[1])*RAD;
+  const y=Math.sin(Δλ)*Math.cos(φ2);
+  const x=Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+  return (Math.atan2(y,x)/RAD+360)%360;
+}
+function dist(a,b){
+  const φ1=a[0]*RAD,φ2=b[0]*RAD,Δφ=(b[0]-a[0])*RAD,Δλ=(b[1]-a[1])*RAD;
+  const h=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function destPoint(p, brngDeg, distM){
+  const δ=distM/R, θ=brngDeg*RAD, φ1=p[0]*RAD, λ1=p[1]*RAD;
+  const φ2=Math.asin(Math.sin(φ1)*Math.cos(δ)+Math.cos(φ1)*Math.sin(δ)*Math.cos(θ));
+  const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(δ)*Math.cos(φ1), Math.cos(δ)-Math.sin(φ1)*Math.sin(φ2));
+  return [φ2/RAD, λ2/RAD];
+}
+function pointInPoly(pt, poly){ // pt=[lat,lng]; poly=[[lat,lng]...]
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const yi=poly[i][0],xi=poly[i][1],yj=poly[j][0],xj=poly[j][1];
+    if(((yi>pt[0])!==(yj>pt[0])) && (pt[1]<(xj-xi)*(pt[0]-yi)/(yj-yi)+xi)) inside=!inside;
+  }
+  return inside;
+}
+
+/* ============ 状態 ============ */
+let startPt=null, endPt=null, editing='start';
+let buildings=[];           // {poly, h, minLat,maxLat,minLng,maxLng}
+let routeLayers=[], routes=[];
+let weather=null;
+const TOKYO=[35.681,139.767];
+const DEFAULT_H=9;          // 高さ不明の建物の仮定[m]
+const MAX_REACH=90;         // 影の到達上限[m]（低い太陽での暴走防止）
+
+/* ============ 地図 ============ */
+const map=L.map('map',{zoomControl:true}).setView([35.6812,139.7671],15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19, attribution:'© OpenStreetMap'
+}).addTo(map);
+let startMarker=null,endMarker=null,sunMarker=null;
+
+function pinIcon(cls){return L.divIcon({className:'',html:`<div class="pin ${cls}"></div>`,iconSize:[24,24],iconAnchor:[12,24]});}
+
+map.on('click', e=>{
+  const ll=[e.latlng.lat, e.latlng.lng];
+  if(editing==='start') setStart(ll); else setEnd(ll);
+});
+function setStart(ll){
+  startPt=ll;
+  if(startMarker) startMarker.setLatLng(ll); else startMarker=L.marker(ll,{icon:pinIcon('s'),draggable:true}).addTo(map).on('dragend',ev=>{startPt=[ev.target.getLatLng().lat,ev.target.getLatLng().lng];afterPt();});
+  document.getElementById('startLabel').textContent=`出発地 ${ll[0].toFixed(4)}, ${ll[1].toFixed(4)}`;
+  setEditing('end'); afterPt();
+}
+function setEnd(ll){
+  endPt=ll;
+  if(endMarker) endMarker.setLatLng(ll); else endMarker=L.marker(ll,{icon:pinIcon('e'),draggable:true}).addTo(map).on('dragend',ev=>{endPt=[ev.target.getLatLng().lat,ev.target.getLatLng().lng];afterPt();});
+  document.getElementById('endLabel').textContent=`目的地 ${ll[0].toFixed(4)}, ${ll[1].toFixed(4)}`;
+  afterPt();
+}
+function afterPt(){ document.getElementById('findBtn').disabled = !(startPt&&endPt); }
+function setEditing(w){
+  editing=w;
+  document.getElementById('btnStart').classList.toggle('active',w==='start');
+  document.getElementById('btnEnd').classList.toggle('active',w==='end');
+  document.querySelector('#btnStart small').textContent = w==='start'?'編集中':'';
+  document.querySelector('#btnEnd small').textContent   = w==='end'?'編集中':'';
+}
+document.getElementById('btnStart').onclick=()=>setEditing('start');
+document.getElementById('btnEnd').onclick=()=>setEditing('end');
+
+/* ============ 時刻UI ============ */
+const dateInput=document.getElementById('dateInput');
+const timeSlider=document.getElementById('timeSlider');
+const timeText=document.getElementById('timeText');
+function pad(n){return String(n).padStart(2,'0');}
+function initNow(){
+  const now=new Date();
+  dateInput.value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  timeSlider.value=now.getHours()*60+now.getMinutes();
+  updateTime();
+}
+function chosenDate(){
+  const [y,m,d]=dateInput.value.split('-').map(Number);
+  const mins=+timeSlider.value;
+  return new Date(y, m-1, d, Math.floor(mins/60), mins%60);
+}
+function updateTime(){
+  const mins=+timeSlider.value;
+  timeText.textContent=`${pad(Math.floor(mins/60))}:${pad(mins%60)}`;
+  updateSun();
+}
+timeSlider.oninput=updateTime;
+dateInput.onchange=updateSun;
+document.getElementById('nowBtn').onclick=initNow;
+
+/* ============ 太陽コンパス描画 ============ */
+function updateSun(){
+  const center = startPt || TOKYO;
+  const sp=solarPosition(chosenDate(), center[0], center[1]);
+  drawCompass(sp);
+  const stats=document.getElementById('sunStats');
+  if(sp.altitude<=0){
+    stats.innerHTML=`<b>日の出ていない時間帯</b><br>この時刻は太陽が地平線の下です。<br>影の概念は適用されません。`;
+  }else{
+    const dirName=['北','北東','東','南東','南','南西','西','北西'][Math.round(sp.azimuth/45)%8];
+    stats.innerHTML=`方位 <b>${sp.azimuth.toFixed(0)}°</b>（${dirName}の空）<br>高度 <b>${sp.altitude.toFixed(0)}°</b><br><span style="font-size:11px">影は<b style="font-size:11px">${dirName=='南'?'北':dirName}の反対側</b>に伸びます</span>`;
+  }
+  // 太陽マーカーを地図上に（出発地から方位方向）
+  if(startPt && sp.altitude>0){
+    const sunLL=destPoint(startPt, sp.azimuth, 120);
+    if(sunMarker) sunMarker.setLatLng(sunLL);
+    else sunMarker=L.marker(sunLL,{icon:L.divIcon({html:'<div class="sun-icon">☀️</div>',className:'',iconSize:[24,24]})}).addTo(map);
+  }else if(sunMarker){ map.removeLayer(sunMarker); sunMarker=null; }
+}
+function drawCompass(sp){
+  const cx=46,cy=46,r=36;
+  let svg=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#FBF8F1" stroke="var(--line)"/>`;
+  [['N',0],['E',90],['S',180],['W',270]].forEach(([t,a])=>{
+    const p=polar(cx,cy,r-9,a);
+    svg+=`<text x="${p.x}" y="${p.y+3}" font-size="9" fill="var(--ink-soft)" text-anchor="middle" font-family="Zen Kaku Gothic New">${t}</text>`;
+  });
+  if(sp.altitude>0){
+    const dot=polar(cx,cy,(r-16)*(1-sp.altitude/90)+6, sp.azimuth); // 高度が高いほど中心寄り
+    svg+=`<line x1="${cx}" y1="${cy}" x2="${dot.x}" y2="${dot.y}" stroke="var(--sun)" stroke-width="1.5" opacity=".5"/>`;
+    svg+=`<circle cx="${dot.x}" cy="${dot.y}" r="6" fill="var(--sun)"/><circle cx="${dot.x}" cy="${dot.y}" r="6" fill="none" stroke="var(--sun-soft)" stroke-width="3"/>`;
+  }else{
+    svg+=`<text x="${cx}" y="${cy+4}" font-size="9" fill="var(--ink-soft)" text-anchor="middle">夜</text>`;
+  }
+  document.getElementById('compass').innerHTML=svg;
+}
+function polar(cx,cy,r,deg){const a=(deg-90)*RAD;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)};}
+
+/* ============ 天気（Open-Meteo / キー不要） ============ */
+async function loadWeather(){
+  const c=startPt||TOKYO;
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c[0]}&longitude=${c[1]}&current=temperature_2m,cloud_cover,weather_code,apparent_temperature`);
+    const j=await r.json();
+    weather=j.current;
+    const t=weather.temperature_2m, feel=weather.apparent_temperature, cloud=weather.cloud_cover;
+    const heatNote = feel>=30 ? '☀️ 日陰を強くおすすめ' : feel>=26 ? '日陰がうれしい陽気' : '比較的すごしやすい';
+    document.getElementById('weatherLine').innerHTML=
+      `<span class="temp-chip">${t.toFixed(0)}℃（体感${feel.toFixed(0)}℃）</span>雲量${cloud}% ・ ${heatNote}`;
+  }catch(e){
+    document.getElementById('weatherLine').innerHTML='天気情報を取得できませんでした';
+  }
+}
+
+/* ============ 建物取得（Overpass） ============ */
+async function fetchBuildings(bbox){
+  const q=`[out:json][timeout:25];(way["building"](${bbox.s},${bbox.w},${bbox.n},${bbox.e}););out geom;`;
+  const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
+  if(!r.ok) throw new Error('overpass');
+  const j=await r.json();
+  const out=[];
+  for(const el of j.elements){
+    if(!el.geometry||el.geometry.length<3) continue;
+    const poly=el.geometry.map(g=>[g.lat,g.lon]);
+    let h=DEFAULT_H;
+    const tg=el.tags||{};
+    if(tg.height) h=parseFloat(tg.height)||DEFAULT_H;
+    else if(tg['building:levels']) h=(parseFloat(tg['building:levels'])||3)*3.2;
+    const lats=poly.map(p=>p[0]),lngs=poly.map(p=>p[1]);
+    out.push({poly,h,minLat:Math.min(...lats),maxLat:Math.max(...lats),minLng:Math.min(...lngs),maxLng:Math.max(...lngs)});
+  }
+  return out;
+}
+
+/* ============ 経路取得（OSRM） ============ */
+async function fetchRoutes(){
+  const u=`https://router.project-osrm.org/route/v1/driving/${startPt[1]},${startPt[0]};${endPt[1]},${endPt[0]}?overview=full&geometries=geojson&alternatives=true`;
+  const r=await fetch(u); const j=await r.json();
+  if(j.code!=='Ok'||!j.routes.length) throw new Error('no route');
+  return j.routes.map(rt=>({coords:rt.geometry.coordinates.map(c=>[c[1],c[0]]), distance:rt.distance}));
+}
+
+/* ============ 日陰判定 ============ */
+function isShaded(pt, sp){
+  if(sp.altitude<=0.5) return true; // 夜・薄明は実質日射なし扱い
+  const tanAlt=Math.tan(sp.altitude*RAD);
+  const maxReach=Math.min(MAX_REACH, 60/tanAlt + 5); // 高さ60mまで遮蔽を見る目安
+  for(let dd=4; dd<=maxReach; dd+=4){
+    const probe=destPoint(pt, sp.azimuth, dd);  // 太陽方向へ進む
+    const needH=dd*tanAlt;                        // この距離で遮るのに必要な高さ
+    for(const b of buildings){
+      if(b.h<needH) continue;
+      if(probe[0]<b.minLat||probe[0]>b.maxLat||probe[1]<b.minLng||probe[1]>b.maxLng) continue;
+      if(pointInPoly(probe,b.poly)) return true;
+    }
+  }
+  return false;
+}
+function scoreRoute(coords, sp){
+  const segs=[]; let shadedLen=0, total=0;
+  for(let i=0;i<coords.length-1;i++){
+    const a=coords[i], b=coords[i+1];
+    const segLen=dist(a,b); if(segLen<1) continue;
+    const steps=Math.max(1,Math.round(segLen/25));
+    for(let s=0;s<steps;s++){
+      const t0=s/steps, t1=(s+1)/steps;
+      const pa=[a[0]+(b[0]-a[0])*t0, a[1]+(b[1]-a[1])*t0];
+      const pb=[a[0]+(b[0]-a[0])*t1, a[1]+(b[1]-a[1])*t1];
+      const mid=[(pa[0]+pb[0])/2,(pa[1]+pb[1])/2];
+      const sh=isShaded(mid,sp);
+      const l=dist(pa,pb);
+      segs.push({a:pa,b:pb,shaded:sh});
+      total+=l; if(sh) shadedLen+=l;
+    }
+  }
+  return {segs, shadePct: total?shadedLen/total:0};
+}
+
+/* ============ メイン ============ */
+const findBtn=document.getElementById('findBtn');
+const statusEl=document.getElementById('status');
+function setStatus(msg,err){statusEl.innerHTML=msg;statusEl.classList.toggle('err',!!err);}
+
+findBtn.onclick=async()=>{
+  findBtn.disabled=true;
+  routeLayers.forEach(l=>l.forEach(p=>map.removeLayer(p))); routeLayers=[]; routes=[];
+  document.getElementById('resultCard').style.display='none';
+  const sp=solarPosition(chosenDate(), startPt[0], startPt[1]);
+  try{
+    setStatus('<span class="spin"></span>経路を計算中…');
+    const raw=await fetchRoutes();
+
+    // 経路全体のbboxで建物取得
+    let minLat=9,maxLat=-9,minLng=999,maxLng=-999;
+    raw.forEach(r=>r.coords.forEach(c=>{minLat=Math.min(minLat,c[0]);maxLat=Math.max(maxLat,c[0]);minLng=Math.min(minLng,c[1]);maxLng=Math.max(maxLng,c[1]);}));
+    const pad=0.0012; // 約130m余白
+    if(sp.altitude>0.5){
+      setStatus('<span class="spin"></span>建物データを取得中…');
+      buildings=await fetchBuildings({s:minLat-pad,w:minLng-pad,n:maxLat+pad,e:maxLng+pad});
+    }else buildings=[];
+
+    setStatus('<span class="spin"></span>日陰を解析中…（建物 '+buildings.length+' 棟）');
+    await new Promise(r=>setTimeout(r,30));
+
+    routes=raw.map((r,i)=>{const sc=scoreRoute(r.coords,sp);return{...r,...sc,name:i===0?'最短経路':'別ルート '+i};});
+
+    // スコア付け：日陰多い & 距離短いほど良い
+    const pref=+document.getElementById('prefSlider').value/100; // 0=距離 1=日陰
+    const maxD=Math.max(...routes.map(r=>r.distance));
+    routes.forEach(r=>{
+      const distScore=1-(r.distance/maxD);   // 0..1 短いほど高
+      r.combined = pref*r.shadePct + (1-pref)*distScore;
+    });
+    const bestIdx=routes.reduce((bi,r,i,a)=>r.combined>a[bi].combined?i:bi,0);
+
+    drawRoutes(bestIdx);
+    renderResults(bestIdx, sp);
+    setStatus(sp.altitude<=0.5?'※ 日射のない時間帯のため、距離のみで評価しています':'');
+  }catch(e){
+    setStatus('取得に失敗しました。時間をおいて再度お試しください（外部サービス混雑の可能性）。',true);
+  }finally{ findBtn.disabled=false; }
+};
+
+function drawRoutes(sel){
+  routeLayers.forEach(l=>l.forEach(p=>map.removeLayer(p))); routeLayers=[];
+  routes.forEach((r,idx)=>{
+    const layer=[];
+    if(idx!==sel){ // 非選択は薄い灰色1本
+      layer.push(L.polyline(r.coords,{color:'#9b9286',weight:4,opacity:.5}).addTo(map));
+    }else{
+      r.segs.forEach(s=>{
+        layer.push(L.polyline([s.a,s.b],{color:s.shaded?'#2E6E7E':'#E07B2E',weight:6,opacity:.92}).addTo(map));
+      });
+    }
+    routeLayers.push(layer);
+  });
+  const all=routes[sel].coords;
+  map.fitBounds(L.latLngBounds(all.concat([startPt,endPt])),{padding:[40,40]});
+}
+
+function renderResults(bestIdx, sp){
+  const box=document.getElementById('results'); box.innerHTML='';
+  document.getElementById('resultCard').style.display='block';
+  const order=[...routes.keys()].sort((a,b)=>routes[b].combined-routes[a].combined);
+  let curSel=order.includes(bestIdx)?bestIdx:order[0];
+  order.forEach(i=>{
+    const r=routes[i];
+    const card=document.createElement('div');
+    card.className='route-card'+(i===bestIdx?' best':'')+(i===curSel?' sel':'');
+    const mins=Math.round(r.distance/80); // ざっくり徒歩 80m/分
+    card.innerHTML=`
+      <div class="rt-name">${r.name}</div>
+      <div class="bar"><i style="width:${(r.shadePct*100).toFixed(0)}%"></i></div>
+      <div class="rt-meta">
+        <span class="shade-pct">日陰 ${(r.shadePct*100).toFixed(0)}%</span>
+        <span><b>${(r.distance/1000).toFixed(2)}</b> km</span>
+        <span>徒歩約 <b>${mins}</b> 分</span>
+      </div>`;
+    card.onclick=()=>{ drawRoutes(i); [...box.children].forEach(c=>c.classList.remove('sel')); card.classList.add('sel'); };
+    box.appendChild(card);
+  });
+}
+
+/* ============ 初期化 ============ */
+initNow();
+loadWeather();
+setEditing('start');
+</script>
+</body>
+</html>

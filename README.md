@@ -1,77 +1,89 @@
-# 影みち（Kagemichi）— 東京 日陰ルート案内
+# 影みち（shadowalker）
 
-東京の暑い日に、距離だけでなく **日陰の多さ** で徒歩ルートを比較・推薦する
-モバイル対応のWebアプリ（PWA）です。フレームワーク不要のバニラJS・静的サイトで、
-外部APIはすべてキー不要のものだけを使います。
+東京の暑い日に、距離だけでなく **日陰の多さ＝体感の楽さ** で徒歩ルートを比較・推薦する
+モバイル対応のWebアプリ（PWA）です。アプリの表示名は **影みち**、コード／リポジトリ識別子は
+**shadowalker** です。
+
+> 「距離だけが楽さじゃない」を可視化するツール。道案内そのものは Google マップが得意なので、
+> 影みちは**日陰で選ぶ**ところに専念し、各ルートの「**Googleマップで開く**」ボタンから実ナビへ渡します。
 
 ## 使い方
 
 1. 出発地・目的地を **地図タップ / 地名検索 / 現在地ボタン** で指定
 2. 「いつ歩く？」で日付・時刻を選ぶ（太陽の位置が更新されます）
 3. 「近さ ⟷ 日陰の多さ」スライダーで重視するバランスを調整
-4. **影みちを探す** を押すと、複数の徒歩ルートを日陰率で比較しておすすめを表示
-   - 日陰区間はティール（青緑）、日なたはオレンジで色分け
+4. **影みちを探す** で複数の徒歩ルートを日陰率で比較しておすすめを表示
+   - 日陰＝ティール / 日なた＝オレンジ / 覆い経路（地下・アーケード）＝濃ティール破線
+   - ルートカードに「うち覆い経路◯%」、暑い日は覆い率の高いルートに「日陰★★★」
+5. 気に入ったルートの「**このルートをGoogleマップで開く**」で歩行ナビへ
 
 ## 仕組み
 
-- **太陽位置**: 緯度経度と日時からの天文計算（SunCalc準拠 / 外部データ不要）
-- **日陰判定**: 各地点から太陽方向へレイを飛ばし、太陽を遮る高さの建物があるかを判定。
-  建物は OpenStreetMap（Overpass）から取得し、高さは `height` / `building:levels`、
-  無い所は約9mと仮定。判定は **一様グリッドの空間インデックス** で高速化。
-- **徒歩ルート**: BRouter（foot プロファイル）を優先。取得できない場合は
-  OSRM-foot（FOSSGIS）→ OSRM-car の順にフォールバック。
-- **地名検索**: Nominatim（東京近郊にバイアス、debounce・中断・キャッシュで規約配慮）
-- **天気**: Open-Meteo（体感温度に応じた一言コメント）
+- **太陽位置**: 緯度経度と日時からの天文計算（SunCalc準拠・外部データ不要）
+- **日陰判定**: 各地点から太陽方向へレイを飛ばし、遮る高さの **建物・街路樹** があるかを判定。
+  **アーケード・地下街・高架下**などの覆い経路は「常時日陰の辺」として重畳。判定は
+  **一様グリッド＋R-tree** で高速化し、負荷が高い時は **Web Worker** に逃がします。
+- **徒歩ルート**: BRouter(foot) を優先、OSRM-foot(FOSSGIS) → Valhalla → OSRM-car にフォールバック
+- **建物高さ**: PLATEAU（国交省）6区を優先マージ、無い所は OpenStreetMap、欠損は約9m
+- **街路樹**: 東京都オープンデータ「都道の街路樹」＋ OSM `natural=tree`
+- **地名検索 / 天気**: Nominatim（debounce・中断・キャッシュ）/ Open-Meteo
 
-## ローカル実行
+外部サービスはすべてキー不要。Overpass等の結果は **IndexedDB に bbox 単位でキャッシュ**（TTL7日）。
+出典・ライセンスは [`LICENSE_DATA.md`](./LICENSE_DATA.md)。
 
-ビルド不要。リポジトリ直下で静的サーバを立てるだけです（ESモジュールのため
-`file://` ではなく HTTP で開く必要があります）。
+## 開発
 
 ```bash
-python3 -m http.server 8000
-# → http://localhost:8000/
+npm install
+npm run dev        # http://localhost:5173/
+npm run test       # Vitest（純粋ロジックの単体テスト）
+npm run typecheck  # tsc --noEmit
+npm run build      # 型チェック + dist 生成
+npm run preview    # dist をプレビュー
 ```
 
-現在地（Geolocation）は HTTPS か localhost でのみ動作します。
+- ネットワーク無し（CI/サンドボックス等）でも UI 確認できるよう、`?stub=1` で外部呼出を
+  `public/data/sample/*` のダミーへ固定します（開発時は fetch 失敗時に自動フォールバック）。
+- 現在地（Geolocation）は HTTPS か localhost でのみ動作します。
+
+### 実データの投入（手動・任意）
+
+```bash
+# PLATEAU/Flateau の建物（区ごと）→ public/data/plateau/<区コード>.geojson
+npm run extract:plateau -- <input.geojson> 13104
+# 東京都「都道の街路樹」CSV → public/data/trees/<name>.geojson
+npm run extract:trees -- <input.csv> tokyo
+```
+
+各データの取得先は `LICENSE_DATA.md` と各スクリプト冒頭のコメントを参照。これらは CI には載せず手動運用です。
 
 ## デプロイ（GitHub Pages）
 
-`.github/workflows/deploy.yml` が `main` / 開発ブランチへの push で自動デプロイします。
-初回のみ、リポジトリ設定の **Settings → Pages → Build and deployment → Source** を
-**「GitHub Actions」** に切り替えてください。公開URLは
-`https://<ユーザー名>.github.io/shadowalker/` です（サブパス対応のため全パス相対）。
+`.github/workflows/deploy.yml` が `main` / 開発ブランチへの push で `npm ci && npm run build` し、
+`dist/` を Pages へ配信します。初回のみ **Settings → Pages → Source = GitHub Actions** に設定してください。
+サブパス（`/shadowalker/`）対応のため Vite の `base: './'` と相対パスを使用しています。
 
 ## 構成
 
 ```
-index.html              エントリ（Leaflet は CDN）
-css/styles.css          スタイル（暖色紙パレット / ティール=日陰 / オレンジ=日なた）
-js/config.js            定数・APIエンドポイント・ベースパス
-js/sun.js               太陽位置の天文計算
-js/geo.js               幾何ヘルパ + 現在地取得
-js/buildings.js         建物取得（Overpass）+ 空間インデックス
-js/routing.js           徒歩ルーティング（フォールバック連鎖）
-js/shade.js             日陰判定・経路スコアリング
-js/weather.js           天気（Open-Meteo）
-js/geocode.js           地名検索（Nominatim, debounce）
-js/ui.js                ボトムシート・太陽コンパス
-js/app.js               配線・状態管理・SW登録
-manifest.json / sw.js   PWA（ホーム画面追加・アプリシェルのオフライン対応）
-icons/                  アイコン
-.github/workflows/      Pages 自動デプロイ
+index.html                 Vite エントリ（<title>影みち）
+src/
+  main.ts                  配線・状態管理・SW登録
+  config.ts  types.ts  geo.ts
+  sun/position.ts          太陽位置
+  routing/{provider,brouter,osrm-foot,valhalla,geom}.ts
+  shade/{buildings,ray,covered,trees,score,runner,worker}.ts
+  data/{overpass,plateau,local}.ts   取得＋IndexedDBキャッシュ
+  map/{leaflet-setup,render-route}.ts
+  ui/{controls,compass}.ts
+  weather.ts  geocode.ts
+scripts/{extract-plateau,extract-trees}.ts   手動データ抽出
+public/{manifest.webmanifest, sw.js, icons/, data/}
+legacy/prototype.html      初期プロトタイプ（無改変保管）
 ```
 
 ## 限界（相対比較の目安として）
 
-歩行者専用路・地下通路・アーケードは経路グラフ次第で十分に反映されません。
-建物高さデータは東京でも欠損があり、街路樹・高架下・日射の散乱は未考慮です。
-今後の強化候補: 国土交通省 PLATEAU の3D都市モデル連携、OSM の
-`tunnel`/`covered`/`layer` を常時日陰の特別な辺として重み付け、街路樹データの活用。
-
-## 外部サービスについて
-
-BRouter / OSRM / Overpass / Nominatim / Open-Meteo の各公共サーバを利用します。
-いずれもSLAのない無料サービスのため、混雑時は失敗・低速になることがあります
-（Nominatim は debounce/キャッシュ、地図タイル以外のAPIレスポンスは Service Worker で
-長期キャッシュしないなど、利用規約に配慮しています）。
+歩行者専用路・地下通路・アーケードは経路グラフと覆いデータ次第で完全ではありません。
+建物高さは PLATEAU 未整備地点では OSM/仮定値、街路樹は実データ投入前は OSM/サンプルに依存します。
+高架下・日射の散乱・屋根形状（LOD2）は簡略化しています。実際のナビは Google マップへ委ねる設計です。

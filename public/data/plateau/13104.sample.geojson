@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "_note": "PLATEAU抽出のサンプル（新宿区・ごく一部）。実データは scripts/extract-plateau.ts で生成し 13104.geojson として配置。単体テスト用。",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "height": 138.0, "lod": 1, "source": "plateau" },
+      "geometry": { "type": "Polygon", "coordinates": [[
+        [139.70200, 35.68870], [139.70270, 35.68870], [139.70270, 35.68910], [139.70200, 35.68910], [139.70200, 35.68870]
+      ]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "height": 54.5, "lod": 1, "source": "plateau" },
+      "geometry": { "type": "Polygon", "coordinates": [[
+        [139.70320, 35.69020], [139.70400, 35.69020], [139.70400, 35.69070], [139.70320, 35.69070], [139.70320, 35.69020]
+      ]] }
+    }
+  ]
+}

@@ -6,47 +6,33 @@
 <meta name="theme-color" content="#F4EFE6">
 <meta name="description" content="東京の暑い日に、すこしでも日陰の多い徒歩ルートを案内します。">
 <title>影みち — 東京 日陰ルート案内</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <div id="map"></div>
 
-<!-- 左上の小さなタイトルチップ -->
-<div class="brand">
-  <span class="sun-mark"></span><span class="brand-name">影みち</span>
-</div>
+<div class="brand"><span class="sun-mark"></span><span class="brand-name">影みち</span></div>
 
-<!-- ボトムシート -->
 <section class="sheet sheet--half" id="sheet" aria-label="操作パネル">
   <button class="grabber" id="grabber" aria-label="パネルの高さを切り替え"><span></span></button>
+  <div class="sheet-body">
 
-  <div class="sheet-body" id="sheetBody">
-
-    <!-- 検索 -->
     <div class="search">
       <input type="search" id="searchInput" placeholder="地名・住所で検索（例：渋谷駅）" autocomplete="off" enterkeyhint="search">
       <button class="search-clear" id="searchClear" aria-label="クリア" hidden>×</button>
       <ul class="search-results" id="searchResults" hidden></ul>
     </div>
 
-    <!-- 1. 地点 -->
     <div class="card">
       <h2><span class="num">1</span>出発地と目的地</h2>
       <div class="field">
-        <button class="pt-btn start active" id="btnStart">
-          <span class="dot"></span><span id="startLabel">出発地を地図でタップ</span><small>編集中</small>
-        </button>
+        <button class="pt-btn start active" id="btnStart"><span class="dot"></span><span id="startLabel">出発地を地図でタップ</span><small>編集中</small></button>
       </div>
       <div class="field">
-        <button class="pt-btn end" id="btnEnd">
-          <span class="dot"></span><span id="endLabel">目的地を地図でタップ</span><small></small>
-        </button>
+        <button class="pt-btn end" id="btnEnd"><span class="dot"></span><span id="endLabel">目的地を地図でタップ</span><small></small></button>
       </div>
       <div class="row">
         <button class="ghost" id="useGps"><span class="gps-i">◎</span> 現在地を出発地に</button>
@@ -55,7 +41,6 @@
       <p class="hint">地図タップ・検索・現在地で2点を指定できます。検索結果は「編集中」の点に入ります。</p>
     </div>
 
-    <!-- 2. 時刻 -->
     <div class="card">
       <h2><span class="num">2</span>いつ歩く？</h2>
       <div class="field row">
@@ -68,7 +53,6 @@
       </div>
     </div>
 
-    <!-- 太陽 -->
     <div class="card">
       <h2><span class="num">☀</span>太陽の位置</h2>
       <div class="compass-wrap">
@@ -78,7 +62,6 @@
       <div class="weather-line" id="weatherLine"><span class="spin"></span>天気を取得中…</div>
     </div>
 
-    <!-- 3. 重視 -->
     <div class="card">
       <h2><span class="num">3</span>なにを優先する？</h2>
       <div class="field">
@@ -89,13 +72,13 @@
       <button class="go" id="findBtn" disabled>影みちを探す</button>
     </div>
 
-    <!-- 結果 -->
     <div class="card" id="resultCard" style="display:none">
       <h2><span class="num">→</span>ルート候補</h2>
       <div id="results"></div>
       <div class="legend" style="margin-top:10px">
         <span><i style="background:var(--shade)"></i>日陰</span>
         <span><i style="background:var(--sun)"></i>日なた</span>
+        <span><i style="background:var(--covered)"></i>覆い（地下・アーケード）</span>
       </div>
     </div>
 
@@ -103,15 +86,14 @@
 
     <details>
       <summary>影の出し方・限界について</summary>
-      <p>太陽の方位・高度は緯度経度と日時から天文計算しています（外部データ不要）。各地点が日陰かは「太陽の方向に、太陽を遮る高さの建物があるか」をレイ判定で求めています。建物の高さは OpenStreetMap の height / building:levels を使い、無い所は約9mと仮定。経路は徒歩ルーター（BRouter）を優先し、取得できない時は OSRM にフォールバックします。歩行者専用路や地下通路、街路樹・高架・アーケード・日射の散乱は十分に反映されません。あくまで相対比較の目安としてお使いください。</p>
+      <p>太陽の方位・高度は緯度経度と日時から天文計算しています（外部データ不要）。各地点が日陰かは「太陽の方向に、太陽を遮る高さの建物・街路樹があるか」をレイ判定で求め、アーケード・地下街・高架下などの「覆い経路」は常時日陰として重ねています。建物高さは PLATEAU（国交省）と OpenStreetMap、街路樹は東京都オープンデータと OSM を用い、欠損は仮定値で補います。経路は徒歩ルーター（BRouter等）を優先。あくまで相対比較の目安としてお使いください。実際のナビは各ルートの「Googleマップで開く」からどうぞ。</p>
     </details>
 
   </div>
 </section>
 
-<!-- 右下の現在地FAB（シートの後ろに置き、~ セレクタで状態連動させる） -->
 <button class="fab" id="locateFab" title="現在地へ" aria-label="現在地へ">◎</button>
 
-<script type="module" src="js/app.js"></script>
+<script type="module" src="/src/main.ts"></script>
 </body>
 </html>

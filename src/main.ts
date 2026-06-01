@@ -8,6 +8,7 @@ import { destPoint, getCurrentPosition } from './geo';
 import { fetchBuildings, fetchCoveredWays, fetchOsmTrees } from './data/overpass';
 import { loadPlateauForBbox, mergeBuildings } from './data/plateau';
 import { loadCuratedArcades, loadTreeGeojson } from './data/local';
+import { loadTokyoTrees } from './data/trees-tokyo';
 import { fetchRoutes } from './routing/provider';
 import { scoreRoutesAsync } from './shade/runner';
 import { fetchWeather, type Weather } from './weather';
@@ -177,16 +178,16 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
 
     if (sp.altitude > 0.5) {
       setStatus('<span class="spin"></span>建物・覆い経路・街路樹を取得中…');
-      const wantSample = STUB || import.meta.env.DEV;
-      const [op, plateau, curated, covOsm, osmTrees, odTrees] = await Promise.all([
+      const [op, plateau, curated, covOsm, osmTrees, tokyoTrees] = await Promise.all([
         fetchBuildings(bbox), loadPlateauForBbox(bbox), loadCuratedArcades(bbox),
-        fetchCoveredWays(bbox), fetchOsmTrees(bbox),
-        wantSample ? loadTreeGeojson('sample', bbox) : Promise.resolve([]),
+        fetchCoveredWays(bbox), fetchOsmTrees(bbox), loadTokyoTrees(bbox),
       ]);
       buildings = mergeBuildings(op, plateau);
       setRayStep(plateau.length ? 3 : 4); // PLATEAU があれば刻みを細かく
       coveredWays = [...curated, ...covOsm];
-      trees = [...odTrees, ...osmTrees];
+      trees = [...tokyoTrees, ...osmTrees];
+      // 東京都データもOSMも取れない（オフライン/開発）時はサンプルで代替
+      if (!trees.length && (STUB || import.meta.env.DEV)) trees = await loadTreeGeojson('sample', bbox);
     }
 
     setStatus(`<span class="spin"></span>日陰を解析中…（建物${buildings.length} / 覆い${coveredWays.length} / 樹${trees.length}）`);

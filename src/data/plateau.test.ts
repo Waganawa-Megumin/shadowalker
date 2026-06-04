@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import proj4 from 'proj4';
-import { mergeBuildings } from './plateau';
+import { mergeBuildings, parsePlateauTile } from './plateau';
 import { makeBuilding } from '../shade/buildings';
-import type { LatLng } from '../types';
+import type { Bbox, LatLng } from '../types';
 
 const EPSG6677 = '+proj=tmerc +lat_0=36 +lon_0=139.8333333333 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
 
@@ -21,6 +21,27 @@ describe('mergeBuildings', () => {
   it('PLATEAU 空ならそのまま', () => {
     const o = makeBuilding([[0, 0], [0, 1], [1, 1]], 9, 'overpass');
     expect(mergeBuildings([o], [])).toEqual([o]);
+  });
+});
+
+describe('parsePlateauTile', () => {
+  const bbox: Bbox = { s: 35.68, n: 35.70, w: 139.69, e: 139.71 };
+  it('[h, flatRing] を bbox 内 Building に変換（flat は lng,lat 順）', () => {
+    const tile: [number, number[]][] = [
+      [120, [139.700, 35.690, 139.701, 35.690, 139.701, 35.691, 139.700, 35.691]],
+    ];
+    const out = parsePlateauTile(tile, bbox);
+    expect(out).toHaveLength(1);
+    expect(out[0].h).toBe(120);
+    expect(out[0].source).toBe('plateau');
+    expect(out[0].poly[0]).toEqual([35.690, 139.700]); // [lat,lng]
+  });
+  it('bbox 外や頂点不足は除外', () => {
+    const tile: [number, number[]][] = [
+      [30, [140.0, 36.0, 140.001, 36.0, 140.001, 36.001]], // bbox外
+      [30, [139.700, 35.690, 139.701, 35.690]],            // 2点のみ
+    ];
+    expect(parsePlateauTile(tile, bbox)).toHaveLength(0);
   });
 });
 

@@ -15,6 +15,7 @@ import { scoreRoutesAsync } from './shade/runner';
 import { fetchWeather, type Weather } from './weather';
 import { searchPlaces, makeDebouncedSearch } from './geocode';
 import { createMap, pinIcon, sunIcon } from './map/leaflet-setup';
+import { setupPoiLayer } from './map/poi-layer';
 import { drawRoutes } from './map/render-route';
 import { initSheet, renderWeather, renderSearchResults, renderRoutes } from './ui/controls';
 import { drawCompass, renderSunStats } from './ui/compass';
@@ -29,6 +30,10 @@ let weather: Weather | null = null;
 /* ===== 地図 ===== */
 const map = createMap($('map'));
 const routeGroup = L.layerGroup().addTo(map);
+const poiLayer = setupPoiLayer(map);
+($('poiToggle') as HTMLInputElement).onchange = (e) => {
+  void poiLayer.setEnabled((e.target as HTMLInputElement).checked);
+};
 let startMarker: L.Marker | null = null, endMarker: L.Marker | null = null, sunMarker: L.Marker | null = null;
 const sheet = initSheet($('sheet'), $('grabber'), () => map.invalidateSize());
 

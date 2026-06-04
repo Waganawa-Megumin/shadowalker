@@ -43,6 +43,11 @@ export interface Park {
   minLat: number; maxLat: number; minLng: number; maxLng: number;
 }
 
+export interface Poi {
+  lat: number; lng: number;
+  kind: 'water' | 'toilet';
+}
+
 export interface RouteResult {
   coords: LatLng[];
   distance: number;

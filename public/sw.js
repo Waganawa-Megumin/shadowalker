@@ -4,10 +4,12 @@
 // BUILD はビルド毎に置換され、これによりSWが必ず更新扱いになる（→自動リロード）。
 const BUILD = '__BUILD_ID__';
 self.__BUILD = BUILD; // 参照（バイト変化＝新SW検知のトリガ）
-const VERSION = 'kagemichi-v3';
+const VERSION = 'kagemichi-v4';
 const SHELL = VERSION + '-shell';
 const TILES = VERSION + '-tiles';
+const DATA = VERSION + '-data';
 const TILE_MAX = 300;
+const DATA_MAX = 600; // 建物/街路樹タイル(同一オリジン /data/) の上限。広域巡回でもストレージ肥大を防ぐ
 
 // ハッシュ付き dist 資産名はビルド毎に変わるため、安定エントリのみ事前キャッシュ（オフラインの最低限）。
 const SHELL_URLS = [
@@ -26,7 +28,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== SHELL && k !== TILES).map(k => caches.delete(k))
+      keys.filter(k => k !== SHELL && k !== TILES && k !== DATA).map(k => caches.delete(k))
     )).then(() => self.clients.claim())
   );
 });
@@ -57,7 +59,13 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // 資産/フォント/データ: stale-while-revalidate（即返し＋背景更新）
+  // 建物/街路樹タイル等（同一オリジンの /data/）: 上限付き stale-while-revalidate
+  if (url.origin === self.location.origin && url.pathname.includes('/data/')) {
+    e.respondWith(cappedSWR(req, DATA, DATA_MAX));
+    return;
+  }
+
+  // 資産/フォント（ハッシュ付き・有限）: stale-while-revalidate（即返し＋背景更新）
   e.respondWith((async () => {
     const cache = await caches.open(SHELL);
     const hit = await cache.match(req);
@@ -65,6 +73,17 @@ self.addEventListener('fetch', e => {
     return hit || (await fetching) || new Response('', { status: 504 });
   })());
 });
+
+// 即返し＋背景更新で上限件数を超えた古いものから削除
+async function cappedSWR(req, cacheName, max) {
+  const cache = await caches.open(cacheName);
+  const hit = await cache.match(req);
+  const fetching = fetch(req).then(res => {
+    cache.put(req, res.clone()).then(() => trimCache(cache, max)).catch(() => {});
+    return res;
+  }).catch(() => null);
+  return hit || (await fetching) || new Response('', { status: 504 });
+}
 
 async function cacheFirstCapped(req) {
   const cache = await caches.open(TILES);

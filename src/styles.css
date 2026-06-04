@@ -109,6 +109,14 @@ label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;lette
 input[type=range]{width:100%;accent-color:var(--sun);height:28px}
 input[type=date]{font-family:inherit;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);flex:1;min-height:44px}
 .timeval{font-family:"Shippori Mincho B1",serif;font-size:20px;font-weight:700;color:var(--ink)}
+.prefval{font-weight:700;color:var(--shade);font-size:14px}
+
+/* 「近さ⟷日陰」スライダー: 色そのもので意味を示す（左=日なた寄り / 右=日陰寄り）。誤解を招く塗りつぶしを排し、つまみ位置でトレードオフを表現 */
+#prefSlider{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;accent-color:auto}
+#prefSlider::-webkit-slider-runnable-track{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--sun) 0%,#d8c79e 45%,var(--shade) 100%)}
+#prefSlider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--ink);box-shadow:var(--shadow);margin-top:-6px;cursor:pointer}
+#prefSlider::-moz-range-track{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--sun) 0%,#d8c79e 45%,var(--shade) 100%)}
+#prefSlider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--ink);box-shadow:var(--shadow);cursor:pointer}
 
 .go{
   width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;
@@ -161,7 +169,7 @@ details p{font-size:11.5px;color:var(--ink-soft);line-height:1.65;margin-top:7px
 .sun-icon{font-size:22px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
 
 @media(min-width:821px){
-  .sheet{left:14px;right:auto;top:14px;bottom:14px;width:380px;height:auto !important;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .sheet{left:14px;right:auto;top:60px;bottom:14px;width:380px;height:auto !important;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow)}
   .grabber{display:none}
   .sheet-body{padding:18px}
   .fab{bottom:24px !important}

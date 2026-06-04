@@ -22,7 +22,15 @@ describe('isShaded', () => {
   it('太陽が南→北の建物では日陰にならない', () => {
     expect(isShaded(pt, { azimuth: 180, altitude: 45 }, grid, buildings)).toBe(false);
   });
-  it('夜(高度<=0.5)は常に日陰扱い', () => {
+  it('薄明・夜(高度<=SHADE_ALT_MIN)は常に日陰扱い', () => {
     expect(isShaded(pt, { azimuth: 180, altitude: 0.2 }, grid, buildings)).toBe(true);
+  });
+  it('高層(100m)の影は90m超でも届く（MAX_REACH=120）', () => {
+    const c = destPoint([35.6810, 139.7675], 0, 110); // 110m 北の高層
+    const el = 0.0002, eg = 0.0010;
+    const poly: LatLng[] = [[c[0] - el, c[1] - eg], [c[0] + el, c[1] - eg], [c[0] + el, c[1] + eg], [c[0] - el, c[1] + eg]];
+    const bs = [makeBuilding(poly, 100)];
+    const g = buildGrid(bs, { s: 35.6800, w: 139.7660, n: 35.6830, e: 139.7690 });
+    expect(isShaded([35.6810, 139.7675], { azimuth: 0, altitude: 30 }, g, bs)).toBe(true);
   });
 });

@@ -1,6 +1,9 @@
 // 影みち Service Worker
 // HTML(ナビゲーション)は常にネットワーク優先で最新を取得（古いindex.html固着を防ぐ）。
 // ハッシュ付き資産・データは stale-while-revalidate。地図タイルは上限付きキャッシュ。API は素通し。
+// BUILD はビルド毎に置換され、これによりSWが必ず更新扱いになる（→自動リロード）。
+const BUILD = '__BUILD_ID__';
+self.__BUILD = BUILD; // 参照（バイト変化＝新SW検知のトリガ）
 const VERSION = 'kagemichi-v3';
 const SHELL = VERSION + '-shell';
 const TILES = VERSION + '-tiles';

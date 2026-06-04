@@ -130,6 +130,20 @@ timeSlider.oninput = updateTime;
 dateInput.onchange = updateSun;
 $('nowBtn').onclick = initNow;
 
+/* ===== ルートの選び方スライダー（意味を言葉で明示） ===== */
+const prefSlider = $('prefSlider') as HTMLInputElement;
+const prefText = $('prefText');
+function prefLabel(v: number): string {
+  if (v <= 15) return '最短を優先';
+  if (v <= 40) return 'やや最短';
+  if (v < 60) return 'バランス';
+  if (v < 85) return '日陰を優先';
+  return 'とにかく日陰';
+}
+function updatePref() { prefText.textContent = prefLabel(+prefSlider.value); }
+prefSlider.oninput = updatePref;
+updatePref();
+
 /* ===== 太陽表示 ===== */
 function updateSun() {
   const center = startPt || TOKYO;

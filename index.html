@@ -65,9 +65,10 @@
     <div class="card">
       <h2><span class="num">3</span>なにを優先する？</h2>
       <div class="field">
-        <label>近さ ⟷ 日陰の多さ</label>
+        <label>ルートの選び方 <span class="prefval" id="prefText">日陰を優先</span></label>
         <input type="range" id="prefSlider" min="0" max="100" step="5" value="60">
-        <div class="legend legend--ends"><span>とにかく最短</span><span>とにかく日陰</span></div>
+        <div class="legend legend--ends"><span>☀ 近い順</span><span>🌳 日陰が多い順</span></div>
+        <p class="hint" id="prefHint">右へ動かすほど、遠回りでも日陰の多いルートを優先します。</p>
       </div>
       <button class="go" id="findBtn" disabled>影みちを探す</button>
     </div>

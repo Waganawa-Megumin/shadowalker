@@ -7,7 +7,7 @@
 |---|---|---|---|
 | 地図タイル / 経路 / 地名 / 建物・覆い・樹（OSM由来） | OpenStreetMap contributors | ODbL 1.0 | © OpenStreetMap contributors |
 | 徒歩経路エンジン | BRouter, OSRM(FOSSGIS), Valhalla(FOSSGIS) | 各サービス規約（フェアユース） | データは OSM |
-| 3D建物（高さ・東京23区 約194万棟収録） | Project PLATEAU（国土交通省, G空間情報センター） | CC BY 4.0 | 「国土交通省 Project PLATEAU」 |
+| 3D建物（高さ・東京都 約320万棟＝23区＋多摩 収録） | Project PLATEAU（国土交通省, G空間情報センター） | CC BY 4.0 | 「国土交通省 Project PLATEAU」 |
 | 3D建物（軽量再パッケージ・本アプリで使用） | Flateau（Pacific Spatial Solutions, Source Cooperative） | CC BY 4.0 | PLATEAU 由来 |
 | 街路樹（約22.8万本・区部＋多摩 収録） | 東京都オープンデータカタログ「都道の街路樹」（建設局） | CC BY 4.0 | 「東京都 都道の街路樹」 |
 | 街路樹（補完） | OpenStreetMap `natural=tree` | ODbL 1.0 | © OpenStreetMap contributors |
@@ -15,8 +15,8 @@
 | 地名検索 | Nominatim（OpenStreetMap Foundation） | ODbL / 利用規約 | © OpenStreetMap contributors |
 
 ## 注意
-- 収録データは **東京23区** が対象です（建物=PLATEAU 由来のタイル `public/data/plateau/`、
-  街路樹=東京都OD のタイル `public/data/trees/`）。23区外は OpenStreetMap で概算します。
+- 収録データは **東京都（23区＋多摩）** が対象です（建物=PLATEAU 由来のタイル `public/data/plateau/`、
+  街路樹=東京都OD のタイル `public/data/trees/`）。島嶼部・都外は OpenStreetMap で概算します。
 - `public/data/arcades/curated.geojson` の覆い経路は概略線形の人手作成データです（実測ではなく目安）。
 - `public/data/sample/*` と `public/data/**/sample.geojson`、`*.sample.geojson` は
   開発・オフライン動作・テスト用のダミーで、実在データではありません。

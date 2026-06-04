@@ -2,7 +2,7 @@
 import L from 'leaflet';
 import './styles.css';
 import type { LatLng, ScoredRoute, Bbox } from './types';
-import { TOKYO, setRayStep, STUB } from './config';
+import { TOKYO, setRayStep, STUB, SHADE_ALT_MIN } from './config';
 import { solarPosition } from './sun/position';
 import { destPoint, getCurrentPosition } from './geo';
 import { fetchBuildings, fetchCoveredWays, fetchOsmTrees } from './data/overpass';
@@ -208,15 +208,20 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
     routes = await scoreRoutesAsync(raw, { sp, bbox, buildings, coveredWays, trees });
 
     const pref = +($('prefSlider') as HTMLInputElement).value / 100;
-    const maxD = Math.max(...routes.map(r => r.distance));
-    routes.forEach(r => { r.combined = pref * r.shadePct + (1 - pref) * (1 - r.distance / maxD); });
+    // 距離項は「最短ルートからの%遠回り」（直感的・安定。2倍遠回りで0）
+    const minD = Math.min(...routes.map(r => r.distance));
+    routes.forEach(r => {
+      const detour = minD > 0 ? (r.distance - minD) / minD : 0;
+      const closeness = 1 - Math.min(1, detour);
+      r.combined = pref * r.shadePct + (1 - pref) * closeness;
+    });
     const bestIdx = routes.reduce((bi, r, i, a) => (r.combined ?? 0) > (a[bi].combined ?? 0) ? i : bi, 0);
 
     drawRoutes(map, routeGroup, routes, bestIdx, startPt, endPt);
-    const hot = !!weather && weather.feel >= 30;
-    renderRoutes($('results'), routes, bestIdx, hot, startPt, endPt, i => drawRoutes(map, routeGroup, routes, i, startPt!, endPt!));
+    const warm = !!weather && weather.feel >= 26; // 体感26℃以上で日陰★バッジを表示
+    renderRoutes($('results'), routes, bestIdx, warm, startPt, endPt, i => drawRoutes(map, routeGroup, routes, i, startPt!, endPt!));
     $('resultCard').style.display = 'block';
-    setStatus(sp.altitude <= 0.5 ? '※ 日射のない時間帯のため、距離のみで評価しています' : '');
+    setStatus(sp.altitude <= SHADE_ALT_MIN ? '※ 日射が弱い時間帯のため、距離を重視して評価しています' : '');
     sheet.setState('half');
   } catch {
     setStatus('取得に失敗しました。時間をおいて再度お試しください（外部サービス混雑の可能性）。', true);

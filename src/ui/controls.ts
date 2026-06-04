@@ -81,8 +81,15 @@ export function googleMapsUrl(start: LatLng, end: LatLng, coords?: LatLng[]): st
   return u;
 }
 
+// 日陰率を段階バッジに（暖かい日のみ）。日陰の多さ＝体感の楽さの目安。
+function shadeBadge(shadePct: number, warm: boolean): string {
+  if (!warm) return '';
+  const stars = shadePct >= 0.85 ? '★★★' : shadePct >= 0.70 ? '★★' : shadePct >= 0.55 ? '★' : '';
+  return stars ? `<span class="badge">日陰${stars}</span>` : '';
+}
+
 export function renderRoutes(
-  box: HTMLElement, routes: ScoredRoute[], bestIdx: number, hotWeather: boolean,
+  box: HTMLElement, routes: ScoredRoute[], bestIdx: number, warm: boolean,
   start: LatLng, end: LatLng, onSelect: (i: number) => void,
 ): void {
   box.innerHTML = '';
@@ -92,9 +99,9 @@ export function renderRoutes(
     const card = document.createElement('div');
     card.className = 'route-card' + (i === bestIdx ? ' best' : '') + (i === bestIdx ? ' sel' : '');
     const mins = Math.round(r.distance / 80);
-    const coveredStar = (hotWeather && r.coveredPct >= 0.25) ? '<span class="badge">日陰★★★</span>' : '';
+    const badge = shadeBadge(r.shadePct, warm) + (r.coveredPct >= 0.3 ? '<span class="badge badge-cov">覆い多め</span>' : '');
     card.innerHTML = `
-      <div class="rt-name">${r.name}${coveredStar}</div>
+      <div class="rt-name">${r.name}${badge}</div>
       <div class="bar"><i style="width:${(r.shadePct * 100).toFixed(0)}%"></i></div>
       <div class="rt-meta">
         <span class="shade-pct">日陰 ${(r.shadePct * 100).toFixed(0)}%</span>

@@ -7,13 +7,13 @@ export const TOKYO: LatLng = [35.681, 139.767];
 
 // 日陰判定パラメータ
 export const DEFAULT_H = 9;       // 高さ不明の建物の仮定[m]
-export const MAX_REACH = 90;      // 影の到達上限[m]
-export const MAX_BLD_H = 60;      // 遮蔽を考慮する建物高さの上限[m]
-export let RAY_STEP = 4;          // レイ判定の刻み[m]（Phase B で 3 に）
+export const MAX_REACH = 120;     // 影の到達上限[m]（PLATEAU実高さで高層の影も拾う）
+export const MAX_BLD_H = 100;     // 遮蔽を考慮する建物高さの上限[m]
+export let RAY_STEP = 4;          // レイ判定の刻み[m]（PLATEAUあり時 3 に）
 export const SAMPLE_M = 25;       // 経路サンプリング間隔[m]
 export const CELL_M = 30;         // 建物グリッドのセルサイズ[m]
-export const SHADE_ALT_MIN = 0.5; // この高度[度]以下は実質日陰扱い（Phase B で 2.0）
-export const TREE_TRANSMITTANCE = 0.4; // 樹冠の透過率
+export const SHADE_ALT_MIN = 3.0; // この高度[度]以下は実質日陰扱い（直達日射が激減）
+export const TREE_TRANSMITTANCE = 0.4; // 樹冠の透過率（1本で日陰強度0.6）
 export const COVERED_RADIUS_M = 10;    // 覆い経路と判定する近傍半径[m]
 
 // Phase B で 3m に切替えるためのミュータブル設定

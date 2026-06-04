@@ -13,13 +13,18 @@
  *   public/data/plateau/t/<tx>_<ty>.json = [[height, [lng,lat,lng,lat,...]], ...]（0.01°グリッド・外周のみ）
  *   public/data/plateau/index.json       = { deg, tiles:[...] }
  *
+ * メモリ: 入力を1ファイル(=1区)ずつ処理し、その区ぶんだけタイルへ追記する逐次方式。
+ *   全建物を同時に保持しないため、東京23区（約194万棟）でも既定ヒープで完了する
+ *   （NODE_OPTIONS の増量は不要）。中間として t/<key>.ndjson を生成し、最後に JSON 配列へ変換。
+ *
  * 注意: 平面直角座標系9系(EPSG:6677, JGD2011)のデータは WGS84 へ自動変換。
  */
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, appendFileSync } from 'node:fs';
 import proj4 from 'proj4';
 
 const EPSG6677 = '+proj=tmerc +lat_0=36 +lon_0=139.8333333333 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
 const DEG = 0.01;
+const DIR = 'public/data/plateau/t';
 
 const round6 = (n: number) => Math.round(n * 1e6) / 1e6;
 
@@ -44,11 +49,15 @@ function main() {
   const inputs = process.argv.slice(2);
   if (!inputs.length) { console.error('usage: npm run extract:plateau -- <geojson1> [geojson2 ...]'); process.exit(1); }
 
-  const tiles = new Map<string, [number, number[]][]>();
+  rmSync(DIR, { recursive: true, force: true });
+  mkdirSync(DIR, { recursive: true });
+  const tileKeys = new Set<string>();
   let total = 0, kept = 0;
 
   for (const input of inputs) {
     const src = JSON.parse(readFileSync(input, 'utf8'));
+    // この区ぶんだけタイル別に貯めて（文字列フラグメント）、末尾でまとめて追記
+    const wardTiles = new Map<string, string[]>();
     for (const f of src.features || []) {
       total++;
       const g = f.geometry;
@@ -66,17 +75,27 @@ function main() {
           flat.push(lng, lat); cx += lng; cy += lat; n++;
         }
         const key = `${Math.floor((cx / n) / DEG)}_${Math.floor((cy / n) / DEG)}`;
-        let arr = tiles.get(key); if (!arr) { arr = []; tiles.set(key, arr); }
-        arr.push([h, flat]); kept++;
+        let arr = wardTiles.get(key); if (!arr) { arr = []; wardTiles.set(key, arr); }
+        arr.push(JSON.stringify([h, flat]));
+        kept++;
       }
     }
+    for (const [key, frags] of wardTiles) {
+      appendFileSync(`${DIR}/${key}.ndjson`, frags.join('\n') + '\n');
+      tileKeys.add(key);
+    }
+    // src / wardTiles はループ毎に解放され、保持は tileKeys のみ
   }
 
-  rmSync('public/data/plateau/t', { recursive: true, force: true });
-  mkdirSync('public/data/plateau/t', { recursive: true });
-  for (const [key, arr] of tiles) writeFileSync(`public/data/plateau/t/${key}.json`, JSON.stringify(arr));
-  writeFileSync('public/data/plateau/index.json', JSON.stringify({ deg: DEG, tiles: [...tiles.keys()].sort() }));
-  console.log(`total=${total} kept=${kept} tiles=${tiles.size}`);
+  // ndjson → JSON 配列へ変換（1タイルずつ）
+  for (const key of tileKeys) {
+    const ndjson = `${DIR}/${key}.ndjson`;
+    const lines = readFileSync(ndjson, 'utf8').trimEnd().split('\n');
+    writeFileSync(`${DIR}/${key}.json`, `[${lines.join(',')}]`);
+    rmSync(ndjson);
+  }
+  writeFileSync('public/data/plateau/index.json', JSON.stringify({ deg: DEG, tiles: [...tileKeys].sort() }));
+  console.log(`total=${total} kept=${kept} tiles=${tileKeys.size}`);
 }
 
 main();

@@ -9,6 +9,7 @@ import { fetchBuildings, fetchCoveredWays, fetchOsmTrees } from './data/overpass
 import { loadPlateauForBbox, mergeBuildings } from './data/plateau';
 import { loadCuratedArcades, loadTreeGeojson } from './data/local';
 import { loadTokyoTrees } from './data/trees-tokyo';
+import { loadParksForBbox } from './data/parks';
 import { fetchRoutes } from './routing/provider';
 import { scoreRoutesAsync } from './shade/runner';
 import { fetchWeather, type Weather } from './weather';
@@ -189,23 +190,25 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
     let buildings: Awaited<ReturnType<typeof fetchBuildings>> = [];
     let coveredWays: Awaited<ReturnType<typeof fetchCoveredWays>> = [];
     let trees: Awaited<ReturnType<typeof fetchOsmTrees>> = [];
+    let parks: Awaited<ReturnType<typeof loadParksForBbox>> = [];
 
-    if (sp.altitude > 0.5) {
-      setStatus('<span class="spin"></span>建物・覆い経路・街路樹を取得中…');
-      const [op, plateau, curated, covOsm, osmTrees, tokyoTrees] = await Promise.all([
+    if (sp.altitude > SHADE_ALT_MIN) {
+      setStatus('<span class="spin"></span>建物・覆い経路・街路樹・公園を取得中…');
+      const [op, plateau, curated, covOsm, osmTrees, tokyoTrees, parksData] = await Promise.all([
         fetchBuildings(bbox), loadPlateauForBbox(bbox), loadCuratedArcades(bbox),
-        fetchCoveredWays(bbox), fetchOsmTrees(bbox), loadTokyoTrees(bbox),
+        fetchCoveredWays(bbox), fetchOsmTrees(bbox), loadTokyoTrees(bbox), loadParksForBbox(bbox),
       ]);
       buildings = mergeBuildings(op, plateau);
       setRayStep(plateau.length ? 3 : 4); // PLATEAU があれば刻みを細かく
       coveredWays = [...curated, ...covOsm];
       trees = [...tokyoTrees, ...osmTrees];
+      parks = parksData;
       // 東京都データもOSMも取れない（オフライン/開発）時はサンプルで代替
       if (!trees.length && (STUB || import.meta.env.DEV)) trees = await loadTreeGeojson('sample', bbox);
     }
 
-    setStatus(`<span class="spin"></span>日陰を解析中…（建物${buildings.length} / 覆い${coveredWays.length} / 樹${trees.length}）`);
-    routes = await scoreRoutesAsync(raw, { sp, bbox, buildings, coveredWays, trees });
+    setStatus(`<span class="spin"></span>日陰を解析中…（建物${buildings.length} / 覆い${coveredWays.length} / 樹${trees.length} / 公園${parks.length}）`);
+    routes = await scoreRoutesAsync(raw, { sp, bbox, buildings, coveredWays, trees, parks });
 
     const pref = +($('prefSlider') as HTMLInputElement).value / 100;
     // 距離項は「最短ルートからの%遠回り」（直感的・安定。2倍遠回りで0）

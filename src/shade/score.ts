@@ -3,14 +3,15 @@ import type { LatLng, ShadeContext, SampleResult, ScoredRoute, RouteResult } fro
 import { dist } from '../geo';
 import { isShaded } from './ray';
 import { treeShadeStrength } from './trees';
-import { SAMPLE_M, COVERED_RADIUS_M } from '../config';
+import { SAMPLE_M, COVERED_RADIUS_M, PARK_SHADE } from '../config';
 
 // 1サンプル点の実効日陰強度と覆い判定
 export function sampleShade(mid: LatLng, ctx: ShadeContext): { strength: number; covered: boolean } {
   const building = isShaded(mid, ctx.sp, ctx.grid, ctx.buildings) ? 1 : 0;
   const cov = ctx.covered ? ctx.covered.hitAt(mid, COVERED_RADIUS_M) : { covered: false, strength: 0 };
   const tree = ctx.trees ? treeShadeStrength(mid, ctx.sp, ctx.trees) : 0;
-  const strength = Math.max(building, cov.strength, tree);
+  const park = ctx.parks && ctx.parks.inPark(mid[0], mid[1]) ? PARK_SHADE : 0;
+  const strength = Math.max(building, cov.strength, tree, park);
   return { strength, covered: cov.covered };
 }
 

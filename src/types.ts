@@ -38,6 +38,11 @@ export interface Tree {
   source: 'tokyo-od' | 'osm';
 }
 
+export interface Park {
+  ring: LatLng[]; // 外周のみ
+  minLat: number; maxLat: number; minLng: number; maxLng: number;
+}
+
 export interface RouteResult {
   coords: LatLng[];
   distance: number;
@@ -75,10 +80,16 @@ export interface TreeIndex {
   readonly size: number;
 }
 
+export interface ParkIndex {
+  inPark(lat: number, lng: number): boolean;
+  readonly size: number;
+}
+
 export interface ShadeContext {
   sp: SolarPosition;
   grid: BuildingGrid;
   buildings: Building[];
   covered?: CoveredIndex;
   trees?: TreeIndex;
+  parks?: ParkIndex;
 }

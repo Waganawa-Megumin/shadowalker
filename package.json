@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "extract:plateau": "tsx scripts/extract-plateau.ts",
-    "extract:trees": "tsx scripts/extract-trees.ts"
+    "extract:trees": "tsx scripts/extract-trees.ts",
+    "extract:parks": "tsx scripts/extract-parks.ts"
   },
   "dependencies": {
     "idb-keyval": "^6.2.1",

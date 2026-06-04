@@ -15,6 +15,7 @@ export const CELL_M = 30;         // 建物グリッドのセルサイズ[m]
 export const SHADE_ALT_MIN = 3.0; // この高度[度]以下は実質日陰扱い（直達日射が激減）
 export const TREE_TRANSMITTANCE = 0.4; // 樹冠の透過率（1本で日陰強度0.6）
 export const COVERED_RADIUS_M = 10;    // 覆い経路と判定する近傍半径[m]
+export const PARK_SHADE = 0.5;         // 公園・緑地内の日陰相当強度（緑陰・蒸散で涼しい）
 
 // Phase B で 3m に切替えるためのミュータブル設定
 export function setRayStep(v: number): void { RAY_STEP = v; }

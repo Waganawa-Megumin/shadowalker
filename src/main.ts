@@ -229,7 +229,24 @@ loadWeather();
 setEditing('start');
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL }).catch(() => {});
+  // 既にSW管理下のページで新SWが制御を奪ったら（=新版がデプロイされたら）一度だけ自動リロード
+  if (navigator.serviceWorker.controller) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      location.reload();
+    });
+  }
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL });
+      reg.update().catch(() => {});
+      // 復帰時・定期的に更新確認（最新ビルドを取りこぼさない）
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+      setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+    } catch { /* SW未対応でも通常動作 */ }
   });
 }

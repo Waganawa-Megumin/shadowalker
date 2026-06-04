@@ -218,7 +218,7 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
     const bestIdx = routes.reduce((bi, r, i, a) => (r.combined ?? 0) > (a[bi].combined ?? 0) ? i : bi, 0);
 
     drawRoutes(map, routeGroup, routes, bestIdx, startPt, endPt);
-    const warm = !!weather && weather.feel >= 26; // 体感26℃以上で日陰★バッジを表示
+    const warm = !!weather && weather.wbgt >= 25; // 暑さ指数25(警戒)以上で日陰★バッジを表示
     renderRoutes($('results'), routes, bestIdx, warm, startPt, endPt, i => drawRoutes(map, routeGroup, routes, i, startPt!, endPt!));
     $('resultCard').style.display = 'block';
     setStatus(sp.altitude <= SHADE_ALT_MIN ? '※ 日射が弱い時間帯のため、距離を重視して評価しています' : '');

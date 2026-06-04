@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="影みち">
+  <defs>
+    <radialGradient id="sun" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#F6B05E"/>
+      <stop offset="100%" stop-color="#E07B2E"/>
+    </radialGradient>
+  </defs>
+  <!-- タイル背景（teal） -->
+  <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" fill="#2E6E7E"/>
+  <!-- 太陽 -->
+  <circle cx="21.5" cy="11" r="6.4" fill="url(#sun)"/>
+  <!-- 影みち＝日陰の小径（cream の曲線） -->
+  <path d="M3.5 24.5 Q11 17 18 22.5 T29 21" fill="none" stroke="#F4EFE6" stroke-width="3" stroke-linecap="round"/>
+</svg>

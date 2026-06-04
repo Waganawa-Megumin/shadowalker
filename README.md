@@ -29,6 +29,9 @@
 - **徒歩ルート**: BRouter(foot) を優先、OSRM-foot(FOSSGIS) → Valhalla → OSRM-car にフォールバック
 - **建物高さ**: PLATEAU（国交省）**東京都 約320万棟（23区＋多摩）**を優先マージ、都外/島嶼部は OpenStreetMap、欠損は約9m
 - **街路樹**: 東京都オープンデータ「都道の街路樹」**約22.8万本（区部＋多摩）**＋ OSM `natural=tree`
+- **公園・緑地**: OSM の公園ポリゴン **約1.2万**（内部を緑陰の涼域＝日陰相当0.5として加点）
+- **休憩スポット**: OSM の給水・トイレ **約1,120点**（地図トグルでピン表示・ルート評価には不影響）
+- **暑さ指数(WBGT)**: Open-Meteo の気温・湿度・日射・風から近似（区分表示＋日陰★の発火に連動）
 - **地名検索 / 天気**: Nominatim（debounce・中断・キャッシュ）/ Open-Meteo
 
 外部サービスはすべてキー不要。Overpass等の結果は **IndexedDB に bbox 単位でキャッシュ**（TTL7日）。
@@ -60,7 +63,15 @@ ogr2ogr -f GeoJSON -t_srs EPSG:4326 13104.geojson 13104_*.gpkg building_lod0
 npm run extract:plateau -- 13104.geojson [13103.geojson ...]   # 23区分まとめて可
 # 街路樹: 東京都「都道の街路樹」CSV（区部・多摩など複数可。CP932/UTF-8自動判定）
 npm run extract:trees -- tokyo_gairoju.csv [tokyo_tama_gairoju.csv ...]
+# 公園・緑地: OSM等のポリゴンGeoJSON（複数可）→ public/data/parks/parks.json
+npm run extract:parks -- parks*.geojson
+# 休憩スポット: OSMの給水/トイレ点GeoJSON（複数可）→ public/data/poi/poi.json
+npm run extract:poi -- poi*.geojson
 ```
+
+公園・休憩スポットは OSM(Overpass) から取得します。`leisure=park|garden|recreation_ground` /
+`amenity=drinking_water|toilets` を東京bboxで分割取得（タイムアウト回避）→ `osmtogeojson` で
+GeoJSON化 → 上記スクリプトで統合します（公園は単一 `parks.json`、給水/トイレは `poi.json`）。
 
 23区全域の Flateau 一括取得は Source Cooperative の S3 互換プロキシから（認証不要）:
 `aws s3 sync s3://pacificspatial/flateau/gpkg/ ./gpkg --endpoint-url https://data.source.coop --no-sign-request --region us-west-2 --exclude "*" --include "131*"`

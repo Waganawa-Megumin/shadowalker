@@ -136,6 +136,8 @@ input[type=date]{font-family:inherit;font-size:14px;padding:9px 10px;border:1px 
 .poi-toggle{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink);margin-top:10px;cursor:pointer;flex-wrap:wrap}
 .poi-toggle input{width:17px;height:17px;accent-color:var(--shade)}
 .poi-toggle small{color:var(--ink-soft);font-size:11px;width:100%;padding-left:24px}
+.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid #fff;box-shadow:0 0 0 1px var(--line);vertical-align:middle;margin:0 3px 0 6px}
+.pdot.water{background:#2E6E7E}.pdot.toilet{background:#8A7E6B}
 .temp-chip{background:var(--sun-soft);color:#8a4a14;padding:3px 9px;border-radius:20px;font-weight:700;font-size:12px}
 .wbgt-chip{color:#fff;padding:3px 9px;border-radius:20px;font-weight:700;font-size:12px}
 .wbgt-1{background:#5E9A36}.wbgt-2{background:#D8AE2E;color:#2A2724}.wbgt-3{background:#E07B2E}.wbgt-4{background:#CF4E2A}.wbgt-5{background:#A8231A}

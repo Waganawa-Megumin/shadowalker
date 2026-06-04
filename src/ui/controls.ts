@@ -48,7 +48,9 @@ export function initSheet(sheet: HTMLElement, grabber: HTMLElement, onChange?: (
 }
 
 export function renderWeather(el: HTMLElement, w: Weather): void {
-  el.innerHTML = `<span class="temp-chip">${w.temp.toFixed(0)}℃（体感${w.feel.toFixed(0)}℃）</span>雲量${w.cloud}% ・ ${w.note}`;
+  el.innerHTML = `<span class="temp-chip">${w.temp.toFixed(0)}℃（体感${w.feel.toFixed(0)}℃）</span>`
+    + `<span class="wbgt-chip ${w.wbgtCls}">暑さ指数 ${w.wbgt.toFixed(0)}・${w.wbgtLabel}</span>`
+    + ` ${w.note}`;
 }
 
 export function renderSearchResults(

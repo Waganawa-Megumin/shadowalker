@@ -120,6 +120,18 @@ legacy/prototype.html      初期プロトタイプ（無改変保管）
 建物高さは都外/島嶼部では OSM/仮定値、街路樹も都外では OSM に依存します。
 高架下・日射の散乱・屋根形状（LOD2）は簡略化しています。実際のナビは Google マップへ委ねる設計です。
 
+## ライセンス / License
+
+- **コード（`src/`・`scripts/` 等）**: MIT License — [`LICENSE`](./LICENSE)
+- **同梱データ（`public/data/`）**: 各提供元のライセンスに従います — [`LICENSE_DATA.md`](./LICENSE_DATA.md)
+  - 建物=PLATEAU（国交省）／街路樹=東京都オープンデータ → **CC BY 4.0**
+  - 公園・休憩スポット（OpenStreetMap 由来） → **ODbL 1.0**（© OpenStreetMap contributors）
+- MIT は**コードのみ**を対象とします。OSM 由来データ（ODbL）を MIT で再配布するものではありません。
+
+The **source code** is MIT-licensed. **Bundled datasets keep their original licenses**
+— PLATEAU / Tokyo Open Data: **CC BY 4.0**, OpenStreetMap-derived (parks, POIs): **ODbL 1.0**.
+See [`LICENSE_DATA.md`](./LICENSE_DATA.md) for attributions.
+
 ## 開発を応援 / Support this project
 
 「影みち（shadowalker）」は、暑い日の徒歩移動を少し楽にすることを目指して個人開発しているPWAです。  

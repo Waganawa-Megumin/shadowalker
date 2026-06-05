@@ -3,6 +3,7 @@ import L from 'leaflet';
 import './styles.css';
 import type { LatLng, ScoredRoute, Bbox } from './types';
 import { TOKYO, setRayStep, STUB, SHADE_ALT_MIN } from './config';
+import { logError, getDiagnostics } from './log';
 import { solarPosition } from './sun/position';
 import { destPoint, getCurrentPosition } from './geo';
 import { fetchBuildings, fetchCoveredWays, fetchOsmTrees } from './data/overpass';
@@ -180,9 +181,11 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
   routeGroup.clearLayers();
   $('resultCard').style.display = 'none';
   const sp = solarPosition(chosenDate(), startPt[0], startPt[1]);
+  let stage = 'ルート取得';
   try {
     setStatus('<span class="spin"></span>徒歩ルートを計算中…');
     const raw = await fetchRoutes(startPt, endPt);
+    stage = '周辺データ取得';
 
     let minLat = 90, maxLat = -90, minLng = 999, maxLng = -999;
     raw.forEach(r => r.coords.forEach(c => {
@@ -215,8 +218,10 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
       if (!trees.length && (STUB || import.meta.env.DEV)) trees = await loadTreeGeojson('sample', bbox);
     }
 
+    stage = '日陰解析';
     setStatus(`<span class="spin"></span>日陰を解析中…（建物${buildings.length} / 覆い${coveredWays.length} / 樹${trees.length} / 公園${parks.length}）`);
     routes = await scoreRoutesAsync(raw, { sp, bbox, buildings, coveredWays, trees, parks });
+    stage = '描画';
 
     const pref = +($('prefSlider') as HTMLInputElement).value / 100;
     // 距離項は「最短ルートからの%遠回り」（直感的・安定。2倍遠回りで0）
@@ -234,8 +239,15 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
     $('resultCard').style.display = 'block';
     setStatus(sp.altitude <= SHADE_ALT_MIN ? '※ 日射が弱い時間帯のため、距離を重視して評価しています' : '');
     sheet.setState('half');
-  } catch {
-    setStatus('取得に失敗しました。時間をおいて再度お試しください（外部サービス混雑の可能性）。', true);
+  } catch (e) {
+    logError('findBtn:' + stage, e);
+    const reason = e instanceof Error ? e.message : String(e);
+    setStatus(`取得に失敗しました（${stage}：${reason}）。時間をおいて再度お試しください。 <button class="diag-btn" id="copyDiag">診断ログをコピー</button>`, true);
+    const cb = document.getElementById('copyDiag') as HTMLButtonElement | null;
+    if (cb) cb.onclick = async () => {
+      try { await navigator.clipboard.writeText(getDiagnostics()); cb.textContent = '✓ コピーしました（貼り付けて共有できます）'; }
+      catch { cb.textContent = 'コピー不可（コンソールに出力済み）'; console.log(getDiagnostics()); }
+    };
   } finally { btn.disabled = false; }
 };
 
@@ -243,6 +255,9 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
 initNow();
 loadWeather();
 setEditing('start');
+
+// デスクトップのコンソールから __kagemichi.diagnostics() で診断ログを取得できる
+(window as unknown as { __kagemichi?: unknown }).__kagemichi = { diagnostics: getDiagnostics };
 
 if ('serviceWorker' in navigator) {
   // 既にSW管理下のページで新SWが制御を奪ったら（=新版がデプロイされたら）一度だけ自動リロード

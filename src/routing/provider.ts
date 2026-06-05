@@ -6,6 +6,7 @@ import { valhallaProvider } from './valhalla';
 import { dedupe, lineLength } from './geom';
 import { destPoint, bearing, dist } from '../geo';
 import { STUB } from '../config';
+import { logWarn, logError } from '../log';
 
 export const providers: RoutingProvider[] = [
   brouterProvider, osrmFootProvider, valhallaProvider, osrmCarProvider,
@@ -20,7 +21,8 @@ export async function fetchRoutes(start: LatLng, end: LatLng, signal?: AbortSign
     try {
       const r = await p.route(start, end, signal);
       if (r.length) { routes = dedupe(r); primary = p; break; }
-    } catch (e) { lastErr = e; }
+      logWarn('routing:' + p.name, 'ルート0件');
+    } catch (e) { lastErr = e; logWarn('routing:' + p.name, e); }
   }
 
   if (!routes.length) {
@@ -28,7 +30,8 @@ export async function fetchRoutes(start: LatLng, end: LatLng, signal?: AbortSign
       const stub = await loadSampleRoutes();
       if (stub.length) return stub;
     }
-    throw lastErr || new Error('ルートを取得できませんでした');
+    logError('routing', lastErr ?? new Error('全プロバイダでルート0件'), { start, end });
+    throw lastErr || new Error('ルートを取得できませんでした（経路サーバーから応答なし）');
   }
 
   // 3本未満なら直交オフセット中継点で擬似代替を生成

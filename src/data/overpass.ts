@@ -3,6 +3,7 @@ import { get, set } from 'idb-keyval';
 import type { Bbox, Building, CoveredWay, Tree, LatLng, CoveredKind } from '../types';
 import { API, DEFAULT_H, TREE_TRANSMITTANCE, STUB } from '../config';
 import { makeBuilding, parseLevels } from '../shade/buildings';
+import { logWarn } from '../log';
 
 const TTL = 7 * 24 * 3600 * 1000;
 
@@ -34,7 +35,8 @@ export async function fetchBuildings(bbox: Bbox): Promise<Building[]> {
       const q = `[out:json][timeout:25];(way["building"](${bbox.s},${bbox.w},${bbox.n},${bbox.e}););out geom;`;
       const j = await overpass(q);
       return parseBuildings(j);
-    } catch {
+    } catch (err) {
+      logWarn('overpass:buildings', err);
       // 本番では PLATEAU 建物（約320万棟）があるため、補助的な OSM 建物の取得失敗は致命にしない
       if (STUB || import.meta.env?.DEV) return loadSample<Building[]>('buildings-shinjuku', parseBuildings);
       return [];
@@ -70,7 +72,8 @@ export async function fetchCoveredWays(bbox: Bbox): Promise<CoveredWay[]> {
     try {
       const j = await overpass(q);
       return parseCovered(j);
-    } catch {
+    } catch (err) {
+      logWarn('overpass:covered', err);
       return []; // 覆い経路は curated.geojson が別途あるので空でも可
     }
   });
@@ -104,7 +107,8 @@ export async function fetchOsmTrees(bbox: Bbox): Promise<Tree[]> {
     try {
       const j = await overpass(q);
       return parseOsmTrees(j);
-    } catch {
+    } catch (err) {
+      logWarn('overpass:trees', err);
       return [];
     }
   });

@@ -1,16 +1,21 @@
 # 影みち（shadowalker）
 
-![影みち — 距離より、日陰で選ぶ。（インフォグラフィック）](docs/infographic.png)
+**距離より、日陰で選ぶ。** — 東京の暑い日に、距離だけでなく **日陰の多さ＝体感の楽さ** で
+徒歩ルートを比較・推薦するモバイルWebアプリ（PWA）です（表示名＝**影みち** / 識別子＝**shadowalker**）。
 
-東京の暑い日に、距離だけでなく **日陰の多さ＝体感の楽さ** で徒歩ルートを比較・推薦する
-モバイル対応のWebアプリ（PWA）です。アプリの表示名は **影みち**、コード／リポジトリ識別子は
-**shadowalker** です。
+🔗 **公開サイト**: <https://waganawa-megumin.github.io/shadowalker/>
+
+![影みち バナー — 距離より、日陰で選ぶ。](public/og-image.jpg)
 
 **対応エリア：東京都（23区＋多摩）**（建物=PLATEAU 約320万棟、街路樹=東京都オープンデータ 約22.8万本を収録）。
-島嶼部や都外でも OpenStreetMap データで概算します。計算はすべて端末内（ブラウザ）で行い、位置・経路をサーバへ送信しません。
+島嶼部や都外でも OpenStreetMap データで概算します。**計算はすべて端末内（ブラウザ）**で行い、位置・経路をサーバへ送信しません。
 
 > 「距離だけが楽さじゃない」を可視化するツール。道案内そのものは Google マップが得意なので、
 > 影みちは**日陰で選ぶ**ところに専念し、各ルートの「**Googleマップで開く**」ボタンから実ナビへ渡します。
+
+## ひと目でわかる（インフォグラフィック）
+
+![影みち インフォグラフィック](docs/infographic.png)
 
 ## 使い方
 
@@ -19,7 +24,8 @@
 3. 「近さ ⟷ 日陰の多さ」スライダーで重視するバランスを調整
 4. **影みちを探す** で複数の徒歩ルートを日陰率で比較しておすすめを表示
    - 日陰＝ティール / 日なた＝オレンジ / 覆い経路（地下・アーケード）＝濃ティール破線
-   - ルートカードに「うち覆い経路◯%」、暑い日は覆い率の高いルートに「日陰★★★」
+   - ルートカードに「うち覆い経路◯%」、暑い日（WBGT高め）は日陰率に応じて「日陰★〜★★★」
+   - パネルのトグルで **休憩スポット（給水・トイレ）** を地図に表示（ズーム16以上）
 5. 気に入ったルートの「**このルートをGoogleマップで開く**」で歩行ナビへ
 
 ## 仕組み
@@ -89,19 +95,19 @@ GeoJSON化 → 上記スクリプトで統合します（公園は単一 `parks.
 ## 構成
 
 ```
-index.html                 Vite エントリ（<title>影みち）
+index.html                 Vite エントリ（<title>影みち / OG・favicon）
 src/
-  main.ts                  配線・状態管理・SW登録
-  config.ts  types.ts  geo.ts
+  main.ts                  配線・状態管理・SW登録（自動更新）
+  config.ts  types.ts  geo.ts  weather.ts  geocode.ts
   sun/position.ts          太陽位置
   routing/{provider,brouter,osrm-foot,valhalla,geom}.ts
-  shade/{buildings,ray,covered,trees,score,runner,worker}.ts
-  data/{overpass,plateau,local}.ts   取得＋IndexedDBキャッシュ
-  map/{leaflet-setup,render-route}.ts
+  shade/{buildings,ray,covered,trees,parks,score,runner,worker}.ts
+  data/{overpass,plateau,trees-tokyo,parks,poi,local}.ts   取得＋IndexedDBキャッシュ
+  map/{leaflet-setup,render-route,poi-layer}.ts
   ui/{controls,compass}.ts
-  weather.ts  geocode.ts
-scripts/{extract-plateau,extract-trees}.ts   手動データ抽出
-public/{manifest.webmanifest, sw.js, icons/, data/}
+scripts/{extract-plateau,extract-trees,extract-parks,extract-poi}.ts   手動データ抽出
+public/{manifest.webmanifest, sw.js, favicon.svg, og-image.jpg, icons/, data/}
+docs/infographic.png       インフォグラフィック
 legacy/prototype.html      初期プロトタイプ（無改変保管）
 ```
 

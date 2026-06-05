@@ -3,7 +3,10 @@
 **距離より、日陰で選ぶ。** — 東京の暑い日に、距離だけでなく **日陰の多さ＝体感の楽さ** で
 徒歩ルートを比較・推薦するモバイルWebアプリ（PWA）です（表示名＝**影みち** / 識別子＝**shadowalker**）。
 
-🔗 **公開サイト**: <https://waganawa-megumin.github.io/shadowalker/>
+[![Live Demo](https://img.shields.io/badge/▶_アプリを開く-Live_Demo-2E6E7E?style=for-the-badge)](https://waganawa-megumin.github.io/shadowalker/)
+
+▶ **アプリ（動作確認用）**: <https://waganawa-megumin.github.io/shadowalker/>
+（スマホのブラウザでそのまま動きます。ホーム画面に追加すれば PWA として起動。）
 
 ![影みち バナー — 距離より、日陰で選ぶ。](public/og-image.jpg)
 

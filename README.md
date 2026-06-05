@@ -119,3 +119,13 @@ legacy/prototype.html      初期プロトタイプ（無改変保管）
 歩行者専用路・地下通路・アーケードは経路グラフと覆いデータ次第で完全ではありません。
 建物高さは都外/島嶼部では OSM/仮定値、街路樹も都外では OSM に依存します。
 高架下・日射の散乱・屋根形状（LOD2）は簡略化しています。実際のナビは Google マップへ委ねる設計です。
+
+## 開発を応援 / Support this project
+
+「影みち（shadowalker）」は、暑い日の徒歩移動を少し楽にすることを目指して個人開発しているPWAです。  
+役に立った、面白いと思った方は、Ko-fiから応援いただけると開発継続の励みになります。
+
+"shadowalker" is a personal PWA project that explores how shaded walking routes can make hot days a little easier.  
+If you find it useful or interesting, your support on Ko-fi would help me continue improving it.
+
+[![Support on Ko-fi](https://img.shields.io/badge/Support_on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white&style=for-the-badge)](https://ko-fi.com/shonanboyeah)

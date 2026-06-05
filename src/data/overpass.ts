@@ -34,9 +34,10 @@ export async function fetchBuildings(bbox: Bbox): Promise<Building[]> {
       const q = `[out:json][timeout:25];(way["building"](${bbox.s},${bbox.w},${bbox.n},${bbox.e}););out geom;`;
       const j = await overpass(q);
       return parseBuildings(j);
-    } catch (e) {
+    } catch {
+      // 本番では PLATEAU 建物（約320万棟）があるため、補助的な OSM 建物の取得失敗は致命にしない
       if (STUB || import.meta.env?.DEV) return loadSample<Building[]>('buildings-shinjuku', parseBuildings);
-      throw e;
+      return [];
     }
   });
 }

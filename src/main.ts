@@ -199,9 +199,12 @@ function setStatus(msg: string, err = false) { const el = $('status'); el.innerH
 
     if (sp.altitude > SHADE_ALT_MIN) {
       setStatus('<span class="spin"></span>建物・覆い経路・街路樹・公園を取得中…');
+      // 各取得は best-effort。1つ失敗しても全体を止めない（PLATEAU/同梱データで継続）
       const [op, plateau, curated, covOsm, osmTrees, tokyoTrees, parksData] = await Promise.all([
-        fetchBuildings(bbox), loadPlateauForBbox(bbox), loadCuratedArcades(bbox),
-        fetchCoveredWays(bbox), fetchOsmTrees(bbox), loadTokyoTrees(bbox), loadParksForBbox(bbox),
+        fetchBuildings(bbox).catch(() => []), loadPlateauForBbox(bbox).catch(() => []),
+        loadCuratedArcades(bbox).catch(() => []), fetchCoveredWays(bbox).catch(() => []),
+        fetchOsmTrees(bbox).catch(() => []), loadTokyoTrees(bbox).catch(() => []),
+        loadParksForBbox(bbox).catch(() => []),
       ]);
       buildings = mergeBuildings(op, plateau);
       setRayStep(plateau.length ? 3 : 4); // PLATEAU があれば刻みを細かく
